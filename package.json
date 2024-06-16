@@ -3,16 +3,17 @@
 	"version": "1.0.0",
 	"description": "",
 	"type": "module",
-	"main": "index.mjs",
+	"main": "api/index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "node api/index.mjs"
+		"start": "node api/index.js",
+		"dev": "node api/index.js"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
 		"dotenv": "^16.4.5",
-		"express": "^4.18.2"
+		"express": "^4.18.2",
+		"mongoose": "^8.4.1"
 	}
 }
