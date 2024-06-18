@@ -21,9 +21,12 @@ export const createJob = asyncHandler(async (req, res) => {
 });
 
 export const updateJob = asyncHandler(async (req, res) => {
-    const { userId, title, description } = req.job;
+    const { _id } = req.job;
+    const { title, description } = req.body;
 
-    const updatedJob = await Job.findByIdAndUpdate(job._id, { title, description }, { new: true });
+    // TODO: add support for updating categories and tags
+
+    const updatedJob = await Job.findByIdAndUpdate(_id, { title, description }, { new: true });
     if(!updatedJob) throw new ApiError(401, "Failed to update job");
 
     return res

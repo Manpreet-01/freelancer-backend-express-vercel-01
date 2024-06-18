@@ -27,7 +27,7 @@ export const forOwnerOnly = asyncHandler(async (req, res, next) => {
     const job = await Job.findById(jobId);
     if (!job) throw new ApiError(401, "Job not found");
 
-    if (user._id !== job.createdBy) throw new ApiError(401, "Access Denied");
+    if (user._id.toString() !== job.createdBy.toString()) throw new ApiError(401, "Access Denied");
 
     req.job = job;
     next();
