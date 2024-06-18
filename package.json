@@ -6,7 +6,7 @@
 	"main": "api/index.js",
 	"scripts": {
 		"start": "node api/index.js",
-		"dev": "node api/index.js"
+		"dev": "node --watch api/index.js"
 	},
 	"keywords": [],
 	"author": "",

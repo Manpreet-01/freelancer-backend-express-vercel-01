@@ -6,6 +6,7 @@ import { connectDB } from "./db.js";
 import { userRouter } from "./routes/user.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import cors from "cors";
+import { jobRouter } from "./routes/job.routes.js";
 
 const PORT = process.env.PORT || 8000;
 const app = express();
@@ -32,6 +33,7 @@ app.get('/', (req, res) => {
 
 
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/job", jobRouter);
 
 connectDB();
 
