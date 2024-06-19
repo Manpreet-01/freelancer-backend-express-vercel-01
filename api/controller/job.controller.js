@@ -4,8 +4,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const createJob = asyncHandler(async (req, res) => {
-    const { userId, title, description } = req.body;
-    const job = await Job.create({ createdBy: userId, title, description });
+    const { userId, title, description, categories, tags } = req.body;
+    const job = await Job.create({ createdBy: userId, title, description, categories, tags });
 
     const createdJob = await Job.findById(job._id);
 
@@ -22,12 +22,12 @@ export const createJob = asyncHandler(async (req, res) => {
 
 export const updateJob = asyncHandler(async (req, res) => {
     const { _id } = req.job;
-    const { title, description } = req.body;
+    const { title, description, categories, tags } = req.body;
 
     // TODO: add support for updating categories and tags
 
-    const updatedJob = await Job.findByIdAndUpdate(_id, { title, description }, { new: true });
-    if(!updatedJob) throw new ApiError(401, "Failed to update job");
+    const updatedJob = await Job.findByIdAndUpdate(_id, { title, description, categories, tags }, { new: true });
+    if (!updatedJob) throw new ApiError(401, "Failed to update job");
 
     return res
         .status(200)
