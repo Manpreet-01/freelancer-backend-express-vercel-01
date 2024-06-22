@@ -50,6 +50,27 @@ export const registerUser = asyncHandler(async (req, res) => {
         );
 });
 
+export const isUsernameUnique = asyncHandler(async (req, res) => {
+    const { username } = req.body;
+    if (!username) throw new ApiError(409, "username is required");
+
+    const existedUser = await User.findOne({ username });
+    // if (existedUser) throw new ApiError(409, "User with username already exists");
+
+    const msg = existedUser ? "username is already taken" : "username is unique";
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                201,
+                { username },
+                msg
+            )
+        );
+
+});
+
 export const loginUser = asyncHandler(async (req, res) => {
     const { username, email, password } = req.body;
     if (!(username || email) || !password) throw new ApiError(409, "Invalid data payload");
