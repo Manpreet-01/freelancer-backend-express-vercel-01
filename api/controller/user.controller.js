@@ -55,7 +55,6 @@ export const isUsernameUnique = asyncHandler(async (req, res) => {
     if (!username) throw new ApiError(409, "username is required");
 
     const existedUser = await User.findOne({ username });
-    // if (existedUser) throw new ApiError(409, "User with username already exists");
 
     const msg = existedUser ? "username is already taken" : "username is unique";
 
@@ -63,12 +62,10 @@ export const isUsernameUnique = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new ApiResponse(
-                201,
-                { username },
+                200,
                 msg
             )
         );
-
 });
 
 export const loginUser = asyncHandler(async (req, res) => {
