@@ -2,10 +2,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from 'express';
+import cookieParser from "cookie-parser"
+import cors from "cors";
 import { connectDB } from "./db.js";
 import { userRouter } from "./routes/user.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
-import cors from "cors";
 import { jobRouter } from "./routes/job.routes.js";
 
 const PORT = process.env.PORT || 8000;
@@ -14,6 +15,7 @@ const app = express();
 
 app.use(express.json({ limit: "1kb" }));
 app.use(express.urlencoded({ extended: true, limit: "1kb" }));
+app.use(cookieParser())
 
 app.use(
 	cors({

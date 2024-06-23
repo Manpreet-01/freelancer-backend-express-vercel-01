@@ -86,8 +86,8 @@ export const loginUser = asyncHandler(async (req, res) => {
 
     // TODO: Add more options to make cookie more secure and reliable
     const options = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        // httpOnly: true,
+        // secure: process.env.NODE_ENV === "production",
     };
 
     return res
@@ -127,6 +127,23 @@ export const logoutUser = asyncHandler(async (req, res) => {
         .clearCookie("refreshToken", options)
         .json(new ApiResponse(200, {}, "User logged out"));
 });
+
+
+// PROTECTED ROUTES
+export const getUserProfile = asyncHandler(async (req, res) => {
+    const { user } = req;
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { user },
+                "User profile fetched successfully"
+            )
+        );
+});
+
 
 // ADMIN routes
 export const getAllUsers = asyncHandler(async (req, res) => {
