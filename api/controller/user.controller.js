@@ -2,11 +2,13 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import jwt from "jsonwebtoken";
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId);
+        if (!user) throw new Error("invalid refresh token");
 
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
@@ -144,6 +146,32 @@ export const getUserProfile = asyncHandler(async (req, res) => {
         );
 });
 
+export const refreshTokens = asyncHandler(async (req, res) => {
+    const oldRefreshToken = req.cookies?.refreshToken;
+    if (!oldRefreshToken) throw new ApiError(401, "Unauthorize request");
+
+    const decodedToken = jwt.decode(oldRefreshToken, process.env.ACCESS_TOKEN_SECRET);
+    const userId = decodedToken._id;
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(userId);
+
+    // TODO: Add more options to make cookie more secure and reliable
+    const options = {
+        // httpOnly: true,
+        // secure: process.env.NODE_ENV === "production",
+    };
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                { accessToken },
+                "tokens refreshed successfully"
+            )
+        );
+});
 
 // ADMIN routes
 export const getAllUsers = asyncHandler(async (req, res) => {
