@@ -70,3 +70,38 @@ export const getAllJobs = asyncHandler(async (req, res) => {
             )
         );
 });
+
+
+export const getJobById = asyncHandler(async (req, res) => {
+    const jobId = req.params.id || req.query.id || req.body.id;
+    if (!jobId) throw new ApiError(401, "jobId is required");
+
+    const job = await Job.findById(jobId);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                201,
+                { job },
+                "All job fetched successfully"
+            )
+        );
+});
+
+export const getClientJobs = asyncHandler(async (req, res) => {
+    const clientId = req.params.id || req.query.id || req.body.id;
+    if (!clientId) throw new ApiError(401, "clientId is required");
+
+    const jobs = await Job.find({ createdBy: clientId });
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                201,
+                { jobs },
+                "All client jobs fetched successfully"
+            )
+        );
+});

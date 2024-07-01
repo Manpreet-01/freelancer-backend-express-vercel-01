@@ -8,9 +8,16 @@ export const forClientsOnly = asyncHandler(async (req, res, next) => {
     const { userId } = req.body;
     if (!userId) throw new ApiError(401, "userId is required");
 
-    const user = await User.findById(userId);
-    if (!user) throw new ApiError(401, "userId is Invalid");
+    let user;
 
+    try {
+        user = await User.findById(userId);
+    } catch (error) {
+        console.log('error ::: ', error);
+        throw new ApiError(401, "Invalid userId, Not acceptable");
+    }
+
+    if (!user) throw new ApiError(401, "userId is Invalid");
     if (user.role !== 'client') throw new ApiError(401, "Only clients are allowed to create, update and delete jobs");
 
     req.user = user;

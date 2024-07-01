@@ -8,6 +8,6 @@ export async function connectDB() {
     }
     catch (err) {
         console.log("DB connection failed :: ", err.message || err);
-        process.exit(1);
+        // process.exit(1);
     }
 }
