@@ -7,21 +7,19 @@ import { User } from "../models/user.model";
 
 
 export const createProposal = asyncHandler(async (req, res) => {
-    const { jobId, userId, coverLetter } = req.body;
+    const { jobId, coverLetter } = req.body;
+    const { user } = req;
+    if (!user) throw new ApiError(400, "req.user is falsy. middleware buggy or absent");
 
     // TODO: Improve logic for validations and add also for data-types
     if (!jobId) throw new ApiError(401, "jobId is required");
-    if (!userId) throw new ApiError(401, "userId is required");
     if (!coverLetter) throw new ApiError(401, "coverLetter is required");
 
-    const existingProposal = await Proposal.findOne({ job: jobId, user: userId });
+    const existingProposal = await Proposal.findOne({ job: jobId, user: user._id });
     if (existingProposal) throw new ApiError(401, "You already apply for this job.");
 
     const job = await Job.findById(jobId);
     if (!job) throw new ApiError(400, "Job not found");
-
-    const user = await User.findById(userId);
-    if (!user) throw new ApiError(400, "User not found with provided userId");
 
 
     const proposal = await Proposal.create({
@@ -44,27 +42,10 @@ export const createProposal = asyncHandler(async (req, res) => {
 
 
 export const getAllProposals = asyncHandler(async (req, res) => {
-    const userId = req.params.userId || req.query.userId || req.body.userId;
+    const { user } = req;
+    if (!user) throw new ApiError(400, "req.user is falsy. middleware buggy or absent");
 
-    if (!userId) throw new ApiError(401, "userId is required");
-
-    let user;
-
-    try {
-        user = await User.findById(userId);
-    } catch (error) {
-        console.error(error);
-        const err = "User Id is not acceptable";
-
-        throw new ApiError(400, err, err, error.stack);
-    }
-
-    if (!user) throw new ApiError(400, "User not found with provided userId");
-
-    // INFO: there is also a middleware for this task
-    if (user.role !== 'freelancer') throw new ApiError(400, "Only freelancer are allowed");
-
-    const appliedJobs = await Proposal.find({ user: userId });
+    const appliedJobs = await Proposal.find({ user: user._id });
 
     return res
         .status(200)
@@ -79,28 +60,12 @@ export const getAllProposals = asyncHandler(async (req, res) => {
 
 
 export const updateProposals = asyncHandler(async (req, res) => {
-    const { jobId, proposalId, userId, coverLetter } = req.body;
+    const { proposalId, jobId, coverLetter } = req.body;
+    const { user } = req;
+    if (!user) throw new ApiError(400, "req.user is falsy. middleware buggy or absent");
 
-    if (!userId) throw new ApiError(401, "userId is required");
     if (!jobId && !proposalId) throw new ApiError(401, "jobId or proposalId is required");
     if (!coverLetter) throw new ApiError(401, "coverLetter is required");
-
-    // validate user
-    let user;
-
-    try {
-        user = await User.findById(userId);
-    } catch (error) {
-        console.error(error);
-        const err = "User Id is not acceptable";
-
-        throw new ApiError(400, err, err, error.stack);
-    }
-
-    if (!user) throw new ApiError(400, "User not found with provided userId");
-
-    // INFO: there is also a middleware for this task
-    if (user.role !== 'freelancer') throw new ApiError(400, "Only freelancer are allowed");
 
     // validate job
     let proposal;
@@ -110,7 +75,7 @@ export const updateProposals = asyncHandler(async (req, res) => {
             proposal = await Proposal.findByIdAndUpdate(proposalId, { coverLetter }, { new: true, runValidators: true });
         }
         else {
-            proposal = await Proposal.findOneAndUpdate({ job: jobId, user: userId }, { coverLetter }, { new: true, runValidators: true });
+            proposal = await Proposal.findOneAndUpdate({ job: jobId, user: user._id.toString() }, { coverLetter }, { new: true, runValidators: true });
         }
     } catch (error) {
         console.error(error);
