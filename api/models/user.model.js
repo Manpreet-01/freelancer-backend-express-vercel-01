@@ -32,7 +32,8 @@ const userSchema = new mongoose.Schema({
             values: ['freelancer', 'client'],
             message: "Account type must be either 'freelancer' or 'client' only"
         },
-    }
+    },
+    appliedJobs: [],
 }, { timestamps: true });
 
 

@@ -13,6 +13,7 @@ router.route("/delete").delete(forClientsOnly, forOwnerOnly, deleteJob);
 //protected routes
 router.route("/client/get-all").get(getClientJobs);
 
+
 // admin routes
 router.route("/get-all").get(getAllJobs);
 router.route(["/get", "/get/:id"]).get(getJobById);

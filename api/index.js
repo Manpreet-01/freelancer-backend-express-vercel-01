@@ -8,6 +8,7 @@ import { connectDB } from "./db.js";
 import { userRouter } from "./routes/user.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { jobRouter } from "./routes/job.routes.js";
+import { proposalRouter } from "./routes/proposal.routes.js";
 
 const PORT = process.env.PORT || 8000;
 const app = express();
@@ -36,6 +37,7 @@ app.get('/', (req, res) => {
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/job", jobRouter);
+app.use("/api/v1/proposal", proposalRouter);
 
 connectDB();
 
