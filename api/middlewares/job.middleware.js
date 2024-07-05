@@ -5,57 +5,24 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 
 export const forFreelancersOnly = asyncHandler(async (req, res, next) => {
-    const userId = req.query.userId || req.params.userId || req.body.userId;
-    if (!userId) throw new ApiError(401, "userId is required");
-
-    let user;
-
-    try {
-        user = await User.findById(userId);
-    } catch (error) {
-        console.log('error ::: ', error);
-        throw new ApiError(401, "Invalid userId, Not acceptable");
-    }
-
-    if (!user) throw new ApiError(401, "userId is Invalid");
-    if (user.role !== 'freelancer') throw new ApiError(401, "Only Freelancers are allowed");
-
-    req.user = user;
+    if (!req.user) throw new ApiError(401, "jwt middlewere absent");
+    if (req.user.role !== 'freelancer') throw new ApiError(401, "Only Freelancers are allowed");
     next();
 });
 
 export const forClientsOnly = asyncHandler(async (req, res, next) => {
-    const userId = req.query.userId || req.params.userId || req.body.userId;
-    if (!userId) throw new ApiError(401, "userId is required");
-
-    let user;
-
-    try {
-        user = await User.findById(userId);
-    } catch (error) {
-        console.log('error ::: ', error);
-        throw new ApiError(401, "Invalid userId, Not acceptable");
-    }
-
-    if (!user) throw new ApiError(401, "userId is Invalid");
-    if (user.role !== 'client') throw new ApiError(401, "Only clients are allowed to create, update and delete jobs");
-
-    req.user = user;
+    if (req.user.role !== 'client') throw new ApiError(401, "Not allowed");
     next();
 });
 
-
-export const forOwnerOnly = asyncHandler(async (req, res, next) => {
-    const userId = req.query.userId || req.params.userId || req.body.userId;
+export const forJobOwnerOnly = asyncHandler(async (req, res, next) => {
     const jobId = req.query.jobId || req.params.jobId || req.body.jobId;
-
-    if (!userId) throw new ApiError(401, "userId is required");
     if (!jobId) throw new ApiError(401, "jobId is required");
 
     const job = await Job.findById(jobId);
     if (!job) throw new ApiError(401, "Job not found");
 
-    if (user._id.toString() !== job.createdBy.toString()) throw new ApiError(401, "Access Denied");
+    if (req.user._id.toString() !== job.createdBy.toString()) throw new ApiError(401, "Access Denied");
 
     req.job = job;
     next();

@@ -33,7 +33,14 @@ const userSchema = new mongoose.Schema({
             message: "Account type must be either 'freelancer' or 'client' only"
         },
     },
-    appliedJobs: [],
+    appliedJobs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Job'
+    }],
+    savedJobs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Job'
+    }],
 }, { timestamps: true });
 
 

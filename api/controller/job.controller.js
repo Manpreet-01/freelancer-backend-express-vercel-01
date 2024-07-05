@@ -6,8 +6,15 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const createJob = asyncHandler(async (req, res) => {
-    const { userId, title, description, categories, tags } = req.body;
-    const job = await Job.create({ createdBy: userId, title, description, categories, tags });
+    const { title, description, categories, tags } = req.body;
+
+    const job = await Job.create({
+        createdBy: req.user._id.toString(),
+        title,
+        description,
+        categories,
+        tags
+    });
 
     const createdJob = await Job.findById(job._id);
 
@@ -23,12 +30,12 @@ export const createJob = asyncHandler(async (req, res) => {
 });
 
 export const updateJob = asyncHandler(async (req, res) => {
-    const { _id } = req.job;
+    const jobId = req.job._id.toString();
     const { title, description, categories, tags } = req.body;
 
     // TODO: add support for updating categories and tags
 
-    const updatedJob = await Job.findByIdAndUpdate(_id, { title, description, categories, tags }, { new: true });
+    const updatedJob = await Job.findByIdAndUpdate(jobId, { title, description, categories, tags }, { new: true });
     if (!updatedJob) throw new ApiError(401, "Failed to update job");
 
     return res
@@ -43,10 +50,8 @@ export const updateJob = asyncHandler(async (req, res) => {
 });
 
 export const deleteJob = asyncHandler(async (req, res) => {
-    const job = await Job.findByIdAndDelete(req.body.jobId);
+    const job = await Job.findByIdAndDelete(req.job._id.toString());
     if (!job) throw new ApiError(409, "Failed to Delete: Job not found.");
-
-    if (job.createdBy !== req.body.userId) throw new ApiError(409, "Failed: Access denied");
 
     return res
         .status(200)
@@ -62,12 +67,19 @@ export const deleteJob = asyncHandler(async (req, res) => {
 export const getAllJobs = asyncHandler(async (req, res) => {
     const jobs = await Job.find({});
 
+    // Add isSaved field to each job
+    const jobsWithIsSaved = jobs.map(job => {
+        const isSaved = req.user.savedJobs.includes(job._id);
+        return { ...job.toObject(), isSaved };
+    });
+
+
     return res
         .status(200)
         .json(
             new ApiResponse(
                 201,
-                { jobs },
+                { jobs: jobsWithIsSaved },
                 "All Jobs fetched successfully"
             )
         );
@@ -80,22 +92,24 @@ export const getJobById = asyncHandler(async (req, res) => {
 
     const job = await Job.findById(jobId);
 
+    const jobWithIsSaved = {
+        ...job.toObject(),
+        isSaved: req.user.savedJobs.includes(job._id)
+    };
+
     return res
         .status(200)
         .json(
             new ApiResponse(
                 201,
-                { job },
+                { job: jobWithIsSaved },
                 "All job fetched successfully"
             )
         );
 });
 
 export const getClientJobs = asyncHandler(async (req, res) => {
-    const clientId = req.params.id || req.query.id || req.body.id;
-    if (!clientId) throw new ApiError(401, "clientId is required");
-
-    const jobs = await Job.find({ createdBy: clientId });
+    const jobs = await Job.find({ createdBy: req.user._id.toString() });
 
     return res
         .status(200)
@@ -104,6 +118,35 @@ export const getClientJobs = asyncHandler(async (req, res) => {
                 201,
                 { jobs },
                 "All client jobs fetched successfully"
+            )
+        );
+});
+
+
+export const toggleJobIsSaved = asyncHandler(async (req, res) => {
+    const { user } = req;
+    const { jobId } = req.body;
+    if (!jobId) throw new ApiError(401, "jobId is required");
+
+    let isSaved = null;
+
+    if (user.savedJobs.includes(jobId)) {
+        user.savedJobs.pull(jobId);
+        isSaved = false;
+    } else {
+        user.savedJobs.push(jobId);
+        isSaved = true;
+    }
+
+    await user.save();
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                201,
+                { isSaved },
+                "Job isSaved status toggled successfully"
             )
         );
 });
