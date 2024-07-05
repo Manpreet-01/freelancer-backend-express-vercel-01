@@ -65,21 +65,22 @@ export const deleteJob = asyncHandler(async (req, res) => {
 });
 
 export const getAllJobs = asyncHandler(async (req, res) => {
-    const jobs = await Job.find({});
+    let jobs = await Job.find({});
 
-    // Add isSaved field to each job
-    const jobsWithIsSaved = jobs.map(job => {
-        const isSaved = req.user.savedJobs.includes(job._id);
-        return { ...job.toObject(), isSaved };
-    });
-
+    if (req.user.role == 'freelancer') {
+        // Add isSaved field to each job
+        jobs = jobs.map(job => {
+            const isSaved = req.user.savedJobs.includes(job._id);
+            return { ...job.toObject(), isSaved };
+        });
+    }
 
     return res
         .status(200)
         .json(
             new ApiResponse(
                 201,
-                { jobs: jobsWithIsSaved },
+                { jobs },
                 "All Jobs fetched successfully"
             )
         );
@@ -87,22 +88,23 @@ export const getAllJobs = asyncHandler(async (req, res) => {
 
 
 export const getJobById = asyncHandler(async (req, res) => {
+    const { user } = req;
     const jobId = req.params.id || req.query.id || req.body.id;
     if (!jobId) throw new ApiError(401, "jobId is required");
 
-    const job = await Job.findById(jobId);
+    const fetchedJob = await Job.findById(jobId);
+    const job = fetchedJob.toObject();
 
-    const jobWithIsSaved = {
-        ...job.toObject(),
-        isSaved: req.user.savedJobs.includes(job._id)
-    };
+    if (user.role === 'freelancer') {
+        job.isSaved = req.user.savedJobs.includes(job._id);
+    }
 
     return res
         .status(200)
         .json(
             new ApiResponse(
                 201,
-                { job: jobWithIsSaved },
+                { job },
                 "All job fetched successfully"
             )
         );

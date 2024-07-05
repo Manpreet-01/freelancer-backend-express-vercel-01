@@ -9,12 +9,14 @@ const router = Router();
 router.route("/create").post(verifyJWT, forClientsOnly, createJob);
 router.route("/update").put(verifyJWT, forClientsOnly, forJobOwnerOnly, updateJob);
 router.route("/delete").delete(verifyJWT, forClientsOnly, forJobOwnerOnly, deleteJob);
-router.route("/client/get-all").get(verifyJWT, getClientJobs);
+router.route("/client/get-all").get(verifyJWT, forClientsOnly, getClientJobs);
 
 //protected routes for freelancers only
 router.route("/get-all").get(verifyJWT, forFreelancersOnly, getAllJobs);
-router.route(["/get", "/get/:id"]).get(verifyJWT,forFreelancersOnly, getJobById);
 router.route("/save/toggle").put(verifyJWT, forFreelancersOnly, toggleJobIsSaved);
+
+//protected routes for both freelancers and clients only
+router.route(["/get", "/get/:id"]).get(verifyJWT, getJobById);
 
 
 export { router as jobRouter };

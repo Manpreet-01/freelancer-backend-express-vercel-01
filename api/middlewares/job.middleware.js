@@ -5,7 +5,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 
 export const forFreelancersOnly = asyncHandler(async (req, res, next) => {
-    if (!req.user) throw new ApiError(401, "jwt middlewere absent");
     if (req.user.role !== 'freelancer') throw new ApiError(401, "Only Freelancers are allowed");
     next();
 });
