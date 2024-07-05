@@ -45,19 +45,54 @@ export const getAllProposals = asyncHandler(async (req, res) => {
     const { user } = req;
     if (!user) throw new ApiError(400, "req.user is falsy. middleware buggy or absent");
 
-    const appliedJobs = await Proposal.find({ user: user._id });
+    const proposals = await Proposal.find({ user: user._id });
 
     return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                { jobs: appliedJobs },
+                { proposals },
                 "Proposals fetched successfully"
             )
         );
 });
 
+
+export const getProposal = asyncHandler(async (req, res) => {
+    const proposalId = req.params.proposalId || req.query.proposalId || req.body.proposalId;
+    if (!proposalId) throw new ApiError(401, "proposalId is required");
+    
+    const { user } = req;
+    if (!user) throw new ApiError(400, "req.user is falsy. middleware buggy or absent");
+
+    // validate job
+    let proposal;
+
+    try {
+        proposal = await Proposal.findById(proposalId);
+    } catch (error) {
+        console.error(error);
+        const err = "proposal Id is not acceptable";
+
+        throw new ApiError(400, err, err, error.stack);
+    }
+
+    if (!proposal) throw new ApiError(400, "Proposal not found with provided details");
+
+    const isAccessDenied = proposal.user.toString() !== user._id.toString();
+    if (isAccessDenied) throw new ApiError(400, "Access Denied");
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { proposal },
+                "Job Proposal fetched successfully"
+            )
+        );
+});
 
 export const updateProposals = asyncHandler(async (req, res) => {
     const { proposalId, jobId, coverLetter } = req.body;
