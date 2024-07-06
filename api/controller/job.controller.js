@@ -97,6 +97,12 @@ export const getJobById = asyncHandler(async (req, res) => {
 
     if (user.role === 'freelancer') {
         job.isSaved = req.user.savedJobs.includes(job._id);
+        job.proposal = await Proposal.findOne({ job: job._id, user: user._id });
+    }
+
+    if (user.role === 'client') {
+        job.proposals = await Proposal.find({ job: job._id })
+            .populate({ path: 'user', select: 'name username' });
     }
 
     return res

@@ -28,6 +28,9 @@ export const createProposal = asyncHandler(async (req, res) => {
         coverLetter
     });
 
+    await user.appliedJobs.push(job._id);
+    await user.save();
+
 
     return res
         .status(201)
@@ -58,11 +61,10 @@ export const getAllProposals = asyncHandler(async (req, res) => {
         );
 });
 
-
-export const getProposal = asyncHandler(async (req, res) => {
+export const getProposalById = asyncHandler(async (req, res) => {
     const proposalId = req.params.proposalId || req.query.proposalId || req.body.proposalId;
     if (!proposalId) throw new ApiError(401, "proposalId is required");
-    
+
     const { user } = req;
     if (!user) throw new ApiError(400, "req.user is falsy. middleware buggy or absent");
 
@@ -94,24 +96,50 @@ export const getProposal = asyncHandler(async (req, res) => {
         );
 });
 
-export const updateProposals = asyncHandler(async (req, res) => {
-    const { proposalId, jobId, coverLetter } = req.body;
+
+export const getProposal = asyncHandler(async (req, res) => {
+    const jobId = req.params.jobId || req.query.jobId || req.body.jobId;
+    if (!jobId) throw new ApiError(401, "jobId is required");
+
     const { user } = req;
     if (!user) throw new ApiError(400, "req.user is falsy. middleware buggy or absent");
 
-    if (!jobId && !proposalId) throw new ApiError(401, "jobId or proposalId is required");
+    // validate job
+    let proposal;
+
+    try {
+        proposal = await Proposal.findOne({ job: jobId, user: user._id });
+    } catch (error) {
+        console.error(error);
+        const err = "job Id is not acceptable";
+        throw new ApiError(400, err, err, error.stack);
+    }
+
+    if (!proposal) throw new ApiError(400, "Proposal not found with provided details");
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { proposal },
+                "Job Proposal fetched successfully"
+            )
+        );
+});
+
+export const updateProposals = asyncHandler(async (req, res) => {
+    const { jobId, coverLetter } = req.body;
+    const { user } = req;
+    if (!user) throw new ApiError(400, "req.user is falsy. middleware buggy or absent");
+
+    if (!jobId) throw new ApiError(401, "jobId is required");
     if (!coverLetter) throw new ApiError(401, "coverLetter is required");
 
     // validate job
     let proposal;
 
     try {
-        if (proposalId) {
-            proposal = await Proposal.findByIdAndUpdate(proposalId, { coverLetter }, { new: true, runValidators: true });
-        }
-        else {
-            proposal = await Proposal.findOneAndUpdate({ job: jobId, user: user._id.toString() }, { coverLetter }, { new: true, runValidators: true });
-        }
+        proposal = await Proposal.findOneAndUpdate({ job: jobId, user: user._id.toString() }, { coverLetter }, { new: true, runValidators: true });
     } catch (error) {
         console.error(error);
         const err = "Job Id is not acceptable";
@@ -128,6 +156,39 @@ export const updateProposals = asyncHandler(async (req, res) => {
                 200,
                 { proposal },
                 "Job Proposal updated successfully"
+            )
+        );
+});
+
+export const deleteProposal = asyncHandler(async (req, res) => {
+    const { jobId } = req.body;
+    const { user } = req;
+    if (!user) throw new ApiError(400, "req.user is falsy. middleware buggy or absent");
+    if (!jobId) throw new ApiError(401, "jobId is required");
+
+    // validate job
+    let proposal;
+
+    try {
+        proposal = await Proposal.findOneAndDelete({ job: jobId, user: user._id.toString() }, { new: true });
+    } catch (error) {
+        console.error(error);
+        const err = "Invalid data provided";
+        throw new ApiError(400, err, err, error.stack);
+    }
+
+    if (!proposal) throw new ApiError(400, "Proposal not found with provided details");
+
+    await user.appliedJobs.pull(jobId);
+    await user.save();
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { proposal },
+                "Job Proposal Deleted successfully"
             )
         );
 });

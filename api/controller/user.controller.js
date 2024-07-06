@@ -105,11 +105,29 @@ export const loginUser = asyncHandler(async (req, res) => {
         );
 });
 
-// TODO: add a middlware, so user cannot logout others by providing wrong id
+export const getPublicProfile = asyncHandler(async (req, res) => {
+    const { username } = req.body;
+    if (!username) throw new ApiError(409, "username is required");
+
+    const user = await User.findOne({ username }).select("-email -password");
+    if (!user) throw new ApiError(409, "User does not exits");
+
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { user },
+                "User Public profile fetched successfully"
+            )
+        );
+});
+
+// PROTECTED ROUTES
 export const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
-        req.body.id,    // for testing only
-        // req.user._id,
+        req.user._id.toString(),
         {
             $set: {
                 refreshToken: '',
@@ -130,8 +148,6 @@ export const logoutUser = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "User logged out"));
 });
 
-
-// PROTECTED ROUTES
 export const getUserProfile = asyncHandler(async (req, res) => {
     const { user } = req;
 
