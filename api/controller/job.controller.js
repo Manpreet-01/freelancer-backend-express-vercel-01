@@ -65,13 +65,15 @@ export const deleteJob = asyncHandler(async (req, res) => {
 });
 
 export const getAllJobs = asyncHandler(async (req, res) => {
+    const { user } = req;
     let jobs = await Job.find({});
 
-    if (req.user.role == 'freelancer') {
-        // Add isSaved field to each job
+    if (user.role == 'freelancer') {
+        // Add isSaved / isApplied field to each job
         jobs = jobs.map(job => {
-            const isSaved = req.user.savedJobs.includes(job._id);
-            return { ...job.toObject(), isSaved };
+            const isSaved = user.savedJobs.includes(job._id);
+            const isApplied = user.appliedJobs.includes(job._id);
+            return { ...job.toObject(), isSaved, isApplied };
         });
     }
 
@@ -96,8 +98,9 @@ export const getJobById = asyncHandler(async (req, res) => {
     const job = fetchedJob.toObject();
 
     if (user.role === 'freelancer') {
-        job.isSaved = req.user.savedJobs.includes(job._id);
-        job.proposal = await Proposal.findOne({ job: job._id, user: user._id });
+        job.isSaved = user.savedJobs.includes(job._id);
+        job.isApplied = user.appliedJobs.includes(job._id);
+        if (job.isApplied) job.proposal = await Proposal.findOne({ job: job._id, user: user._id });
     }
 
     if (user.role === 'client') {

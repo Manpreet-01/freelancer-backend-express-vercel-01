@@ -106,12 +106,11 @@ export const loginUser = asyncHandler(async (req, res) => {
 });
 
 export const getPublicProfile = asyncHandler(async (req, res) => {
-    const { username } = req.body;
+    const { username } = req.params;
     if (!username) throw new ApiError(409, "username is required");
 
-    const user = await User.findOne({ username }).select("-email -password");
+    const user = await User.findOne({ username }).select("-email -password -savedJobs -appliedJobs");
     if (!user) throw new ApiError(409, "User does not exits");
-
 
     return res
         .status(200)

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { deleteUser, getAllUsers, getUserProfile, isUsernameUnique, loginUser, logoutUser, refreshTokens, registerUser } from "../controller/user.controller.js";
+import { deleteUser, getAllUsers, getPublicProfile, getUserProfile, isUsernameUnique, loginUser, logoutUser, refreshTokens, registerUser } from "../controller/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 
@@ -11,6 +11,7 @@ router.route("/login").post(loginUser);
 router.route("/logout").get(verifyJWT, logoutUser);
 
 router.route("/profile").post(verifyJWT, getUserProfile);
+router.route("/profile/:username").post(getPublicProfile);
 
 router.route("/check-username").post(isUsernameUnique);
 

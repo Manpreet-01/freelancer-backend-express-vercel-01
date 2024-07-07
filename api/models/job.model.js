@@ -12,12 +12,12 @@ const jobSchema = new mongoose.Schema({
         required: true,
     },
     categories: [{
-        type: String,
+        type: String,       // TODO: create a model and use ref for this field
         trim: true,
         required: true,
     }],
     tags: [{
-        type: String,
+        type: String,       // TODO: create a model and use ref for this field
         trim: true,
         required: true
     }],
