@@ -3,9 +3,11 @@
 	"version": "1.0.0",
 	"description": "",
 	"type": "module",
+	"target": "",
 	"main": "api/index.js",
 	"scripts": {
 		"start": "node api/index.js",
+		"test": "node api/test.js",
 		"dev": "node --watch api/index.js",
 		"dev2": "bun --watch api/index.js"
 	},

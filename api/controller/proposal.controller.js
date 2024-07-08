@@ -1,9 +1,10 @@
-import { asyncHandler } from "../utils/asyncHandler";
-import { ApiError } from "../utils/ApiError";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { Proposal } from "../models/proposal.model";
-import { Job } from "../models/job.model";
-import { User } from "../models/user.model";
+import { Proposal } from "../models/proposal.model.js";
+import { Job } from "../models/job.model.js";
+import { User } from "../models/user.model.js";
+import mongoose from "mongoose";
 
 
 export const createProposal = asyncHandler(async (req, res) => {
@@ -30,7 +31,6 @@ export const createProposal = asyncHandler(async (req, res) => {
 
     await user.appliedJobs.push(job._id);
     await user.save();
-
 
     return res
         .status(201)
@@ -189,6 +189,53 @@ export const deleteProposal = asyncHandler(async (req, res) => {
                 200,
                 { proposal },
                 "Job Proposal Deleted successfully"
+            )
+        );
+});
+
+// for clients only
+export const acceptOrRejectProposal = asyncHandler(async (req, res) => {
+    const { user } = req;
+    const proposalId = req.params.proposalId || req.query.proposalId || req.body.proposalId;
+    const pStatus = req.params.proposalStatus || req.query.proposalStatus || req.body.proposalStatus;
+
+    if (!pStatus) throw new ApiError(401, "proposalStatus is required");
+    if (!['rejected', 'accepted', 'reset'].includes(pStatus)) throw new ApiError(401, "Invalid proposalStatus provided");
+
+    // if (!jobId) throw new ApiError(401, "jobId is required");
+    if (!proposalId) throw new ApiError(401, "proposalId is required");
+
+    const isExisted = await Proposal.findById(proposalId).populate("job");
+    if (!isExisted || isExisted.job.createdBy.toString() !== user._id.toString()) {
+        throw new ApiError(401, "Not allowed");
+    }
+
+    // validate
+    let proposal;
+
+    try {
+        if(pStatus === 'reset') {  // change not neither accepted nor rejected
+            proposal = await Proposal.findByIdAndUpdate(proposalId, { status: 'pending' }, { new: true, runValidators: true });
+        } else {
+            proposal = await Proposal.findByIdAndUpdate(proposalId, { status: pStatus }, { new: true, runValidators: true });
+        }
+    } catch (error) {
+        console.error(error);
+        // TODO: pass only validations errors
+        const err = error instanceof mongoose.MongooseError ? error.message : "Invalid data provided";
+        throw new ApiError(400, err, err, error.stack);
+    }
+
+    if (!proposal) throw new ApiError(400, "Proposal not found with provided details");
+
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { proposal },
+                "Proposal status updated successfully"
             )
         );
 });

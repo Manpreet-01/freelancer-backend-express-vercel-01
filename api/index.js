@@ -2,13 +2,14 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from 'express';
-import cookieParser from "cookie-parser"
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import { connectDB } from "./db.js";
 import { userRouter } from "./routes/user.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { jobRouter } from "./routes/job.routes.js";
 import { proposalRouter } from "./routes/proposal.routes.js";
+import mongoose from "mongoose";
 
 const PORT = process.env.PORT || 8000;
 const app = express();
@@ -16,7 +17,7 @@ const app = express();
 
 app.use(express.json({ limit: "1kb" }));
 app.use(express.urlencoded({ extended: true, limit: "1kb" }));
-app.use(cookieParser())
+app.use(cookieParser());
 
 app.use(
 	cors({
@@ -39,11 +40,34 @@ app.use("/api/v1/user", userRouter);
 app.use("/api/v1/job", jobRouter);
 app.use("/api/v1/proposal", proposalRouter);
 
-connectDB();
+const db = await connectDB();
 
 app.use(errorHandler);
 
-// app.use()
-app.listen(PORT, () => console.log('Server ready on port ', PORT));
+
+const server = app.listen(PORT, () => console.log('Server ready on port ', PORT));
+
+
+async function gracefullyShutdown() {
+	try {
+		console.log('closing HTTP server gracefully...');
+		
+		const connection = mongoose.connection;
+
+		if (connection.readyState !== 0) await connection.close();
+		console.log("db connection closed", connection.readyState === 0);
+
+		server.close(() => {
+			console.log('HTTP server closed');
+			process.exit(1);
+		});
+	} catch (error) {
+		console.error("error in graceful shutdown");
+		console.error(error);
+		process.exit(1);
+	}
+}
+process.on('SIGTERM', gracefullyShutdown);
+process.on('SIGINT', gracefullyShutdown);
 
 export default app;
