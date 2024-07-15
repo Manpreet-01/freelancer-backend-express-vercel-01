@@ -45,6 +45,10 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Job'
     }],
+    withdrawnProposals: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Proposal'
+    }],
 }, { timestamps: true });
 
 

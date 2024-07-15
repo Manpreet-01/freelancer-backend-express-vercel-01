@@ -26,6 +26,10 @@ const proposalSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    withdrawn: {
+        type: Boolean,
+        default: false
+    },
 }, { timestamps: true });
 
 export const Proposal = mongoose.model("Proposal", proposalSchema);

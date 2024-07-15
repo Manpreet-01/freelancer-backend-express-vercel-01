@@ -66,14 +66,15 @@ export const deleteJob = asyncHandler(async (req, res) => {
 
 export const getAllJobs = asyncHandler(async (req, res) => {
     const { user } = req;
-    let jobs = await Job.find({});
+    let jobs = await Job.find({}).sort({ createdAt: -1 });
 
     if (user.role == 'freelancer') {
         // Add isSaved / isApplied field to each job
         jobs = jobs.map(job => {
             const isSaved = user.savedJobs.includes(job._id);
             const isApplied = user.appliedJobs.includes(job._id);
-            return { ...job.toObject(), isSaved, isApplied };
+            const isWithdrawn = user.withdrawnProposals.includes(job._id);
+            return { ...job.toObject(), isSaved, isApplied, isWithdrawn };
         });
     }
 
@@ -100,6 +101,7 @@ export const getJobById = asyncHandler(async (req, res) => {
     if (user.role === 'freelancer') {
         job.isSaved = user.savedJobs.includes(job._id);
         job.isApplied = user.appliedJobs.includes(job._id);
+        job.isWithdrawn = user.withdrawnProposals.includes(jobId);
         if (job.isApplied) job.proposal = await Proposal.findOne({ job: job._id, user: user._id });
     }
 
@@ -114,13 +116,13 @@ export const getJobById = asyncHandler(async (req, res) => {
             new ApiResponse(
                 201,
                 { job },
-                "All job fetched successfully"
+                "Job fetched successfully"
             )
         );
 });
 
 export const getClientJobs = asyncHandler(async (req, res) => {
-    const jobs = await Job.find({ createdBy: req.user._id.toString() });
+    const jobs = await Job.find({ createdBy: req.user._id.toString() }).sort({ createdAt: -1 });
 
     return res
         .status(200)
@@ -128,7 +130,7 @@ export const getClientJobs = asyncHandler(async (req, res) => {
             new ApiResponse(
                 201,
                 { jobs },
-                "All client jobs fetched successfully"
+                "All Jobs of a client fetched successfully"
             )
         );
 });

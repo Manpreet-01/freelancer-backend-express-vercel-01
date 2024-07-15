@@ -188,6 +188,91 @@ export const refreshTokens = asyncHandler(async (req, res) => {
         );
 });
 
+export const getUserStats = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: userId
+            }
+        },
+        {
+            $lookup: {
+                from: 'proposals', // The collection name of Proposal
+                localField: '_id',
+                foreignField: 'user',
+                as: 'proposals'
+            }
+        },
+        {
+            $unwind: '$proposals'
+        },
+        {
+            $group: {
+                _id: '$_id',
+                appliedJobsCount: { $first: { $size: "$appliedJobs" } },
+                savedJobsCount: { $first: { $size: "$savedJobs" } },
+                unreadCount: {
+                    $sum: {
+                        $cond: [{ $eq: ['$proposals.status', 'unread'] }, 1, 0]
+                    }
+                },
+                pendingCount: {
+                    $sum: {
+                        $cond: [{ $eq: ['$proposals.status', 'pending'] }, 1, 0]
+                    }
+                },
+                rejectedCount: {
+                    $sum: {
+                        $cond: [{ $eq: ['$proposals.status', 'rejected'] }, 1, 0]
+                    }
+                },
+                acceptedCount: {
+                    $sum: {
+                        $cond: [{ $eq: ['$proposals.status', 'accepted'] }, 1, 0]
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                appliedJobsCount: 1,
+                savedJobsCount: 1,
+                proposalStats: {
+                    unread: '$unreadCount',
+                    pending: '$pendingCount',
+                    rejected: '$rejectedCount',
+                    accepted: '$acceptedCount'
+                }
+            }
+        }
+    ]);
+
+
+    const stats = {
+        user,
+        jobs: {
+            applied: user?.appliedJobs?.length,
+            // accepted: user.acceptedJobs.length,
+            // rejected: user.rejectedJobs.length,
+            saved: user?.savedJobs?.length,
+        }
+    };
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { stats },
+                "User stats fetched successfully"
+            )
+        );
+
+});
+
+
 // ADMIN routes
 export const getAllUsers = asyncHandler(async (req, res) => {
     const users = await User.find({}).select('_id username role');

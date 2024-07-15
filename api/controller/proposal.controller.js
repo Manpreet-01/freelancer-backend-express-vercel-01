@@ -160,6 +160,7 @@ export const updateProposals = asyncHandler(async (req, res) => {
         );
 });
 
+// ONLY for admins
 export const deleteProposal = asyncHandler(async (req, res) => {
     const { jobId } = req.body;
     const { user } = req;
@@ -180,7 +181,50 @@ export const deleteProposal = asyncHandler(async (req, res) => {
     if (!proposal) throw new ApiError(400, "Proposal not found with provided details");
 
     await user.appliedJobs.pull(jobId);
+    await user.withdrawnProposals.push(jobId);
     await user.save();
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { proposal },
+                "Job Proposal Deleted successfully"
+            )
+        );
+});
+
+export const withdrawProposal = asyncHandler(async (req, res) => {
+    const { jobId } = req.body;
+    const { user } = req;
+    if (!user) throw new ApiError(400, "req.user is falsy. middleware buggy or absent");
+    if (!jobId) throw new ApiError(401, "jobId is required");
+
+    // validate job
+    let proposal;
+
+    try {
+        proposal = await Proposal.findOneAndUpdate(
+            { job: jobId, user: user._id.toString() },
+            { withdrawn: true },
+            { new: true }
+        );
+    } catch (error) {
+        console.error(error);
+        const err = "Invalid data provided";
+        throw new ApiError(400, err, err, error.stack);
+    }
+
+    if (!proposal) throw new ApiError(400, "Proposal not found with provided details");
+
+
+    if (!user.withdrawnProposals.includes(jobId)) {
+        await user.withdrawnProposals.push(jobId);
+        await user.save();
+    } else {
+        console.log("jobId exists in user.withdrawnProposals ", { jobId, user });
+    }
 
     return res
         .status(200)
@@ -214,7 +258,7 @@ export const acceptOrRejectProposal = asyncHandler(async (req, res) => {
     let proposal;
 
     try {
-        if(pStatus === 'reset') {  // change not neither accepted nor rejected
+        if (pStatus === 'reset') {  // change not neither accepted nor rejected
             proposal = await Proposal.findByIdAndUpdate(proposalId, { status: 'pending' }, { new: true, runValidators: true });
         } else {
             proposal = await Proposal.findByIdAndUpdate(proposalId, { status: pStatus }, { new: true, runValidators: true });
