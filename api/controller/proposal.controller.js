@@ -32,6 +32,9 @@ export const createProposal = asyncHandler(async (req, res) => {
     await user.appliedJobs.push(job._id);
     await user.save();
 
+    await job.proposals.push(proposal._id);
+    await job.save();
+
     return res
         .status(201)
         .json(
@@ -235,6 +238,14 @@ export const withdrawProposal = asyncHandler(async (req, res) => {
                 "Job Proposal Deleted successfully"
             )
         );
+});
+
+export const deleteAllProposals = asyncHandler(async (req, res) => {
+    const proposals = await Proposal.deleteMany();
+
+    return res.status(200).json(
+        new ApiResponse(200, { proposals }, "Job Proposal Deleted successfully")
+    );
 });
 
 // for clients only

@@ -26,6 +26,11 @@ const jobSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    proposals: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Proposal',
+        required: true
+    }],
 }, { timestamps: true });
 
 export const Job = mongoose.model('Job', jobSchema);

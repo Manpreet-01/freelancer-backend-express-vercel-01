@@ -34,8 +34,9 @@ export const updateJob = asyncHandler(async (req, res) => {
     const { title, description, categories, tags } = req.body;
 
     // TODO: add support for updating categories and tags
+    const updatedData = { title, description, categories, tags };
 
-    const updatedJob = await Job.findByIdAndUpdate(jobId, { title, description, categories, tags }, { new: true });
+    const updatedJob = await Job.findByIdAndUpdate(jobId, updatedData, { new: true });
     if (!updatedJob) throw new ApiError(401, "Failed to update job");
 
     return res
@@ -66,7 +67,11 @@ export const deleteJob = asyncHandler(async (req, res) => {
 
 export const getAllJobs = asyncHandler(async (req, res) => {
     const { user } = req;
-    let jobs = await Job.find({}).sort({ createdAt: -1 });
+    let jobs = await Job.find({}).select("-createdBy -__v").sort({ createdAt: -1 }).populate({
+        path: 'proposals',
+        match: { user: user._id },
+        select: 'status'
+    });
 
     if (user.role == 'freelancer') {
         // Add isSaved / isApplied field to each job
@@ -74,10 +79,10 @@ export const getAllJobs = asyncHandler(async (req, res) => {
             const isSaved = user.savedJobs.includes(job._id);
             const isApplied = user.appliedJobs.includes(job._id);
             const isWithdrawn = user.withdrawnProposals.includes(job._id);
-            return { ...job.toObject(), isSaved, isApplied, isWithdrawn };
+            const proposal = job.proposals?.length ? job.proposals[0] : undefined;
+            return { ...job.toObject(), isSaved, isApplied, isWithdrawn, proposal, proposals: undefined };
         });
     }
-
     return res
         .status(200)
         .json(
@@ -97,17 +102,27 @@ export const getJobById = asyncHandler(async (req, res) => {
 
     const fetchedJob = await Job.findById(jobId);
     const job = fetchedJob.toObject();
+    job.proposalsCount = job.proposals?.length;
 
     if (user.role === 'freelancer') {
         job.isSaved = user.savedJobs.includes(job._id);
         job.isApplied = user.appliedJobs.includes(job._id);
         job.isWithdrawn = user.withdrawnProposals.includes(jobId);
+        job.proposals = undefined;
         if (job.isApplied) job.proposal = await Proposal.findOne({ job: job._id, user: user._id });
     }
 
     if (user.role === 'client') {
-        job.proposals = await Proposal.find({ job: job._id })
-            .populate({ path: 'user', select: 'name username' });
+        const proposals = await Proposal.find({ job: job._id }).populate({
+            path: 'user',
+            select: '-_id name username isAvailableNow'
+        });
+
+        job.proposals = proposals.map(proposal => ({
+            ...proposal.toObject(),
+            isWithdrawn: proposal.withdrawn,
+            withdrawn: undefined,
+        }));
     }
 
     return res
@@ -122,14 +137,20 @@ export const getJobById = asyncHandler(async (req, res) => {
 });
 
 export const getClientJobs = asyncHandler(async (req, res) => {
-    const jobs = await Job.find({ createdBy: req.user._id.toString() }).sort({ createdAt: -1 });
+    const jobs = await Job.find({ createdBy: req.user._id.toString() }).sort({ createdAt: -1 }).select('-__v');
+
+    const jobsWithProposalCount = jobs.map(job => ({
+        ...job.toObject(),
+        proposalsCount: job.proposals.length,          // add proposals count
+        proposals: undefined,                           // remove field
+    }));
 
     return res
         .status(200)
         .json(
             new ApiResponse(
                 201,
-                { jobs },
+                { jobs: jobsWithProposalCount },
                 "All Jobs of a client fetched successfully"
             )
         );
@@ -160,6 +181,22 @@ export const toggleJobIsSaved = asyncHandler(async (req, res) => {
                 201,
                 { isSaved },
                 "Job isSaved status toggled successfully"
+            )
+        );
+});
+
+// TODO: add validation, so only admin can access
+export const removeAllJobsProposals = asyncHandler(async (req, res) => {
+    const updatedData = { proposals: [] };
+    const jobsWithRemovedProposals = await Job.updateMany({}, updatedData, { new: true });
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { jobs: jobsWithRemovedProposals },
+                "Proposals from all Jobs removed successfully"
             )
         );
 });

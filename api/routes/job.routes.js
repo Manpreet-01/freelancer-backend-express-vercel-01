@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createJob, deleteJob, getAllJobs, getClientJobs, getJobById, toggleJobIsSaved, updateJob } from "../controller/job.controller.js";
+import { createJob, deleteJob, getAllJobs, getClientJobs, getJobById, removeAllJobsProposals, toggleJobIsSaved, updateJob } from "../controller/job.controller.js";
 import { forClientsOnly, forFreelancersOnly, forJobOwnerOnly } from "../middlewares/job.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -17,6 +17,10 @@ router.route("/save/toggle").put(verifyJWT, forFreelancersOnly, toggleJobIsSaved
 
 //protected routes for both freelancers and clients only
 router.route(["/get", "/get/:id"]).get(verifyJWT, getJobById);
+
+
+// TODO: add logic for access for admins only
+router.route("/get-all/remove-all-proposals/admin").delete(removeAllJobsProposals);
 
 
 export { router as jobRouter };

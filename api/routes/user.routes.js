@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { deleteUser, getAllUsers, getPublicProfile, getUserProfile, getUserStats, isUsernameUnique, loginUser, logoutUser, refreshTokens, registerUser } from "../controller/user.controller.js";
+import { deleteUser, getAllUsers, getPublicProfile, getUserProfile, getUserStats, isUsernameUnique, loginUser, logoutUser, refreshTokens, registerUser, removeJobsDataFromAllUsers } from "../controller/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 
@@ -24,5 +24,7 @@ router.route("/refresh-tokens").post(refreshTokens);
 router.route("/all").get(getAllUsers);
 
 router.route("/delete").get(deleteUser);
+
+router.route("/remove-all/users/jobs-data/admin").delete(removeJobsDataFromAllUsers);
 
 export { router as userRouter };

@@ -308,3 +308,23 @@ export const deleteUser = asyncHandler(async (req, res) => {
         );
 
 });
+
+export const removeJobsDataFromAllUsers = asyncHandler(async (req, res) => {
+    const updatedData = {
+        appliedJobs: [],
+        savedJobs: [],
+        withdrawnProposals: []
+    };
+
+    const usersWithRemovedJobsData = await User.updateMany({}, updatedData, { new: true });
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { users: usersWithRemovedJobsData },
+                "Jobs data from all User removed successfully"
+            )
+        );
+});
