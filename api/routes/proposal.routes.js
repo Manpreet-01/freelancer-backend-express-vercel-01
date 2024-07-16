@@ -12,7 +12,7 @@ router.use(verifyJWT);
 router.route("/create").post(forFreelancersOnly, createProposal);
 router.route("/update").post(forFreelancersOnly, updateProposals);
 // router.route("/delete").delete(forFreelancersOnly, deleteProposal);  // TODO: only admin should allowed
-router.route("/delete").delete(forFreelancersOnly, withdrawProposal);
+router.route("/withdraw").delete(forFreelancersOnly, withdrawProposal);
 router.route("/get").get(forFreelancersOnly, getProposal);
 router.route("/get-all").get(forFreelancersOnly, getAllProposals);
 
