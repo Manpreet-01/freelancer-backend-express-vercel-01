@@ -26,7 +26,7 @@ const proposalSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    withdrawn: {
+    isWithdrawn: {
         type: Boolean,
         default: false
     },

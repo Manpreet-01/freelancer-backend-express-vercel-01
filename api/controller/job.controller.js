@@ -113,16 +113,10 @@ export const getJobById = asyncHandler(async (req, res) => {
     }
 
     if (user.role === 'client') {
-        const proposals = await Proposal.find({ job: job._id }).populate({
+        job.proposals = await Proposal.find({ job: job._id }).populate({
             path: 'user',
             select: '-_id name username isAvailableNow'
         });
-
-        job.proposals = proposals.map(proposal => ({
-            ...proposal.toObject(),
-            isWithdrawn: proposal.withdrawn,
-            withdrawn: undefined,
-        }));
     }
 
     return res

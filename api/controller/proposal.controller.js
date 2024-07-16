@@ -184,7 +184,7 @@ export const deleteProposal = asyncHandler(async (req, res) => {
     if (!proposal) throw new ApiError(400, "Proposal not found with provided details");
 
     await user.appliedJobs.pull(jobId);
-    await user.withdrawnProposals.push(jobId);
+    await user.withdrawnProposals.pull(jobId);
     await user.save();
 
     return res
@@ -210,7 +210,7 @@ export const withdrawProposal = asyncHandler(async (req, res) => {
     try {
         proposal = await Proposal.findOneAndUpdate(
             { job: jobId, user: user._id.toString() },
-            { withdrawn: true },
+            { isWithdrawn: true },
             { new: true }
         );
     } catch (error) {
