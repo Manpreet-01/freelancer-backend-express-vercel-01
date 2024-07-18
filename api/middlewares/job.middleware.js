@@ -20,6 +20,7 @@ export const forJobOwnerOnly = asyncHandler(async (req, res, next) => {
 
     const job = await Job.findById(jobId);
     if (!job) throw new ApiError(401, "Job not found");
+    if (job.cancelled) throw new ApiError(400, "Job cancelled by client");
 
     if (req.user._id.toString() !== job.createdBy.toString()) throw new ApiError(401, "Access Denied");
 

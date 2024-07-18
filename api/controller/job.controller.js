@@ -51,7 +51,8 @@ export const updateJob = asyncHandler(async (req, res) => {
 });
 
 export const deleteJob = asyncHandler(async (req, res) => {
-    const job = await Job.findByIdAndDelete(req.job._id.toString());
+    const { jobId } = req.body;
+    const job = await Job.findByIdAndDelete(jobId);
     if (!job) throw new ApiError(409, "Failed to Delete: Job not found.");
 
     return res
@@ -61,6 +62,27 @@ export const deleteJob = asyncHandler(async (req, res) => {
                 201,
                 { job },
                 "Job deleted successfully"
+            )
+        );
+});
+
+export const cancelJob = asyncHandler(async (req, res) => {
+    const job = await Job.findByIdAndUpdate(req.job._id.toString(), { cancelled: true }, { new: true });
+    if (!job) throw new ApiError(409, "Failed to Cancel: Job not found.");
+
+    const jobId = job._id.toString();
+
+    const result = await Proposal.updateMany({ job: jobId }, { status: 'job cancelled' },);
+
+    console.log("test ==== ", result);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                201,
+                { job },
+                "Job cancelled successfully"
             )
         );
 });
@@ -101,6 +123,8 @@ export const getJobById = asyncHandler(async (req, res) => {
     if (!jobId) throw new ApiError(401, "jobId is required");
 
     const fetchedJob = await Job.findById(jobId);
+    if (!fetchedJob) throw new ApiError(400, "job not found");
+
     const job = fetchedJob.toObject();
     job.proposalsCount = job.proposals?.length;
 

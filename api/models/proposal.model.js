@@ -17,7 +17,7 @@ const proposalSchema = new mongoose.Schema({
         required: true,
         default: 'unread',
         enum: {
-            values: ['unread', 'pending', 'rejected', 'accepted'],
+            values: ['unread', 'pending', 'rejected', 'accepted', 'job cancelled'],
             message: "Invalid Proposal Status, valid values are: unread, pending, rejected or accepted"
         },
     },

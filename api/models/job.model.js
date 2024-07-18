@@ -26,6 +26,10 @@ const jobSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    cancelled: {
+        type: Boolean,
+        default: false,
+    },
     proposals: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Proposal',
